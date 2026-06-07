@@ -1,0 +1,12 @@
+fastapi
+langchain
+python-dotenv
+streamlit
+langchain-groq
+langchain-ollama
+langgraph
+ipykernel
+uvicorn
+pymupdf
+pydantic
+python-multipart
