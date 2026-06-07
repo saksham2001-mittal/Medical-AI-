@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Medical AI Assistant
 
 AI-powered medical report analysis system built with:
@@ -22,3 +23,6 @@ AI-powered medical report analysis system built with:
 
 ```bash
 uvicorn backend.main:app --reload
+=======
+# Medical-AI-
+>>>>>>> bfc732ec34b6c89c79d00478f8f2192f8c614d46
