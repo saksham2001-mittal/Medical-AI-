@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual Environment
+.venv/
+venv/
+
+# Environment Variables
+.env
+
+# VS Code
+.vscode/
+
+# Uploaded PDFs
+data/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# SQLAlchemy cache
+*.db
+
+# OS files
+.DS_Store
+Thumbs.db
