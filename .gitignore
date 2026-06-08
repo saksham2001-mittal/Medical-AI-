@@ -9,14 +9,8 @@ venv/
 # Environment Variables
 .env
 
-# VS Code
-.vscode/
-
 # Uploaded PDFs
 data/
-
-# Jupyter
-.ipynb_checkpoints/
 
 # SQLAlchemy cache
 *.db
