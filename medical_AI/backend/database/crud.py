@@ -1,5 +1,8 @@
 from datetime import timedelta
-
+from backend.database.utils import (
+    validate_patient_name,
+    normalize_patient_name
+)
 from backend.database.connections import SessionLocal
 from backend.database.models import (Patient, Report, MedicalTestResult)
 from backend.database.utils import (parse_age, parse_date)
@@ -9,70 +12,75 @@ def save_medical_report(medical_report: MedicalReport, raw_text: str):
 
     db = SessionLocal()
     try:
-
-        # -------------------------
-        # PATIENT Information
-        # -------------------------
+        # ===============  CLEAN + VALIDATE PATIENT DATA =============
+        raw_name = medical_report.patient_info.patient_name
+        if not validate_patient_name(raw_name):
+            return { "status": "error", "message": "Invalid patient name extracted" }
         
-
+        clean_name = normalize_patient_name(raw_name)
         patient_age = parse_age(medical_report.patient_info.age)
-        created_at = parse_date(medical_report.report_info.report_date)
-
-
-        existing_patient = (db.query(Patient).filter(
-                Patient.patient_name.ilike(medical_report.patient_info.patient_name),
-                Patient.age == patient_age,
-                Patient.date_of_birth == parse_date(medical_report.patient_info.date_of_birth),
-                Patient.gender.ilike(medical_report.patient_info.gender),
-                Patient.created_at >= created_at - timedelta(days=365)
-            )
-            .first()
-        )
-        # print("DOB:", parse_date(medical_report.patient_info.date_of_birth))
-        # print("AGE:", patient_age)
-        # print("PHONE:", medical_report.patient_info.phone_no)
+        patient_dob = parse_date(medical_report.patient_info.date_of_birth)
+        report_date = parse_date(medical_report.report_info.report_date)
+        phone_no = medical_report.patient_info.phone_no
+        
+        # ================= FIND EXISTING PATIENT =================
+        existing_patient = existing_patient = (
+                    db.query(Patient)
+                    .filter(
+                        Patient.patient_name.ilike(clean_name),
+                        Patient.date_of_birth == patient_dob,
+                        Patient.phone_no == phone_no,
+                        Patient.gender.ilike(medical_report.patient_info.gender)
+                    ).first() )
+        
+        # ================= CREATE PATIENT ==================
         if existing_patient:
             patient = existing_patient
-
         else:
             patient = Patient(
-                patient_name=medical_report.patient_info.patient_name,
+                patient_name=clean_name,
                 age=patient_age,
                 gender=medical_report.patient_info.gender,
-                date_of_birth=parse_date(medical_report.patient_info.date_of_birth) or "Not Found",
-                phone_no=medical_report.patient_info.phone_no or "Not Found",
-                created_at=created_at
-
+                date_of_birth=patient_dob,
+                phone_no=phone_no,
+                # created_at=report_date
             )
-            print(medical_report.model_dump())
             db.add(patient)
             db.commit()
             db.refresh(patient)
 
-        # -------------------------
-        # REPORT
-        # -------------------------
-
+        # ================ CHECK DUPLICATE REPORT ==================
+        existing_report = (db.query(Report)
+                           .filter(Report.patient_id == patient.patient_id,
+                                   Report.report_type.ilike(medical_report.report_info.report_type),
+                                   Report.report_date == report_date,
+                                   Report.lab_name.ilike(medical_report.report_info.lab_name))
+                           .first())
+        
+        if existing_report:
+            return {
+                "status": "duplicate_report",
+                "message": "Report already exists",
+                "patient_id": patient.patient_id,
+                "report_id": existing_report.report_id
+            }
+        
+        # ===================== CREATE REPORT ======================
         report = Report(
             patient_id=patient.patient_id,
             report_type=medical_report.report_info.report_type,
-            report_date=parse_date(medical_report.report_info.report_date),
+            report_date=report_date,
             lab_name=medical_report.report_info.lab_name,
             raw_text=raw_text,
-            created_at=created_at
-
+            # created_at=report_date
         )
-        print(medical_report.report_info)
         db.add(report)
         db.commit()
         db.refresh(report)
 
-        # -------------------------
-        # TEST RESULTS
-        # -------------------------
 
+        # =================== STORE TEST RESULTS ======================
         for test in medical_report.test_results:
-
             test_row = MedicalTestResult(
                 report_id=report.report_id,
                 test_name=test.test_name,
@@ -81,9 +89,7 @@ def save_medical_report(medical_report: MedicalReport, raw_text: str):
                 normal_range=test.normal_range,
                 status=test.status
             )
-
             db.add(test_row)
-
         db.commit()
 
         return {
@@ -91,11 +97,8 @@ def save_medical_report(medical_report: MedicalReport, raw_text: str):
             "patient_id": patient.patient_id,
             "report_id": report.report_id
         }
-
     except Exception as e:
-
         db.rollback()
         raise e
-
     finally:
         db.close()

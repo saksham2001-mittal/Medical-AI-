@@ -1,4 +1,4 @@
-# Medical AI Assistant
+## Medical AI Assistant
 
 AI-powered medical report analysis system built with:
 
@@ -17,8 +17,3 @@ AI-powered medical report analysis system built with:
 - AI Medical Analysis
 - Risk Assessment
 - Recommendations
-
-## Run
-
-```bash
-uvicorn backend.main:app --reload

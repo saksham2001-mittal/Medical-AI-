@@ -1,10 +1,8 @@
-from sqlalchemy import (
-    Column, Integer, String, Date, Text, TIMESTAMP, ForeignKey
-)
+from sqlalchemy import (Column, Integer, String, Date, Text, TIMESTAMP, ForeignKey)
 
 from sqlalchemy.orm import relationship
 from backend.database.connections import Base
-
+from sqlalchemy.sql import func
 
 class Patient(Base):
     __tablename__ = "patients"
@@ -15,7 +13,7 @@ class Patient(Base):
     age = Column(Integer, nullable=True)
     gender = Column(String(20))
     phone_no = Column(String(20))
-    created_at = Column(TIMESTAMP)
+    created_at = Column(TIMESTAMP, server_default=func.now())
 
     reports = relationship(
         "Report",
@@ -37,10 +35,9 @@ class Report(Base):
     report_date = Column(Date)
     lab_name = Column(String(150))
     raw_text = Column(Text)
-    created_at = Column(TIMESTAMP)
+    created_at = Column(TIMESTAMP, server_default=func.now())
 
     patient = relationship( "Patient", back_populates="reports" )
-
     test_results = relationship( "MedicalTestResult", back_populates="report" )
 
 
