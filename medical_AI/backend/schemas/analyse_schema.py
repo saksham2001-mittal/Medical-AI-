@@ -7,14 +7,52 @@ class AbnormalFinding(BaseModel):
     observation: str
 
 
+from typing import List
+from pydantic import BaseModel, Field
+
+
 class AnalysisResult(BaseModel):
+    abnormal_findings: List[str] = Field(
+        default_factory=list,
+        description="Abnormal laboratory findings."
+    )
 
-    overall_health_summary: str
+    possible_conditions: List[str] = Field(
+        default_factory=list,
+        description="Possible medical conditions suggested by the abnormal findings. Do not diagnose."
+    )
 
-    abnormal_findings: List[AbnormalFinding]
+    health_summary: str = Field(
+        description="Simple overall health summary."
+    )
 
-    possible_health_concerns: List[str]
+    recommendations: List[str] = Field(
+        default_factory=list,
+        description="Recommended next medical actions."
+    )
 
-    health_score: int
+    lifestyle_advice: List[str] = Field(
+        default_factory=list,
+        description="Lifestyle improvements."
+    )
 
-    risk_level: str
+    follow_up_tests: List[str] = Field(
+        default_factory=list,
+        description="Suggested follow-up laboratory tests."
+    )
+
+    health_score: int = Field(
+        ge=0,
+        le=100,
+        description="Overall health score."
+    )
+
+    risk_level: str = Field(
+        description="Low, Medium or High."
+    )
+
+    confidence: float = Field(
+        ge=0,
+        le=1,
+        description="Confidence in analysis."
+    )

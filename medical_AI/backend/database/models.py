@@ -1,4 +1,4 @@
-from sqlalchemy import (Column, Integer, String, Date, Text, TIMESTAMP, ForeignKey)
+from sqlalchemy import *
 
 from sqlalchemy.orm import relationship
 from backend.database.connections import Base
@@ -37,19 +37,61 @@ class Report(Base):
     raw_text = Column(Text)
     created_at = Column(TIMESTAMP, server_default=func.now())
 
-    patient = relationship( "Patient", back_populates="reports" )
-    test_results = relationship( "MedicalTestResult", back_populates="report" )
+    patient = relationship("Patient", back_populates="reports")
 
+    test_results = relationship(
+        "MedicalTestResult",
+        back_populates="report"
+    )
+
+    analysis = relationship(
+        "Analysis",
+        back_populates="report",
+        uselist=False,
+        cascade="all, delete-orphan"
+    )
+
+class Analysis(Base):
+    __tablename__ = "analysis"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    report_id = Column(
+        Integer,
+        ForeignKey("reports.report_id"),
+        nullable=False,
+        unique=True
+    )
+
+    abnormal_findings = Column(JSON)
+
+    possible_conditions = Column(JSON)
+
+    recommendations = Column(JSON)
+
+    lifestyle_advice = Column(JSON)
+
+    follow_up_tests = Column(JSON)
+
+    health_summary = Column(Text)
+
+    health_score = Column(Integer)
+
+    risk_level = Column(String(20))
+
+    confidence = Column(Float)
+
+    report = relationship(
+        "Report",
+        back_populates="analysis"
+    )
 
 class MedicalTestResult(Base):
     __tablename__ = "test_results"
 
     test_id = Column(Integer, primary_key=True, index=True)
 
-    report_id = Column(
-        Integer,
-        ForeignKey("reports.report_id")
-    )
+    report_id = Column(Integer,ForeignKey("reports.report_id") )
 
     test_name = Column(String(100))
     value = Column(String(50))

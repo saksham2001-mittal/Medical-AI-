@@ -1,46 +1,136 @@
-MEDICAL_EXTRACTION_PROMPT = """
+from __future__ import annotations
 
-You are an expert medical report extraction system. 
+import json
+from textwrap import dedent
 
-Extract structured information from the medical report.
 
-Return ONLY Valid JSON.
+def build_medical_prompt(report_text: str, output_schema: dict) -> str:
+    """
+    Build the extraction prompt.
 
-JSON Structure:
+    Parameters
+    ----------
+    report_text: OCR extracted text.
+    
+    output_schema: JSON schema (or schema template) expected from the LLM.
 
-{
-  "patient_info": {
-    patient_name:""
-    date_of_birth: ""
-    age:""
-    gender: ""
-    phone_no: ""
-  },
-  "report_info": {
-    "report_type": "",
-    "report_date": "",
-    "lab_name": ""
-  },
-  "test_results": [
-    {
-      "test_name": "",
-      "value": "",
-      "unit": "",
-      "normal_range": "",
-      "status": ""
-    }
-  ]
-}
+    Returns
+    -------
+    Prompt string.
+    """
 
-Rules:
+    output_schema = json.dumps(output_schema, indent=2)
 
-1. Extract all available medical information exactly as written in the report.
-2. Do NOT guess or infer missing values.
-3. If a field is not present, return null.
-4. Age must be returned as an integer only.
-5. Extract phone number if available.
-6. Extract date of birth if available.
-7. Extract report date exactly as present in the report.
-8. Status should be categorised as High / Low / Normal if possible.
-9. Return ONLY Valid JSON.
-"""
+    return dedent(f"""
+    You are an expert medical laboratory report extraction assistant.
+
+    Your task is to extract structured information from OCR text of
+    pathology, laboratory and diagnostic reports.
+
+    -----------------------------
+    GENERAL RULES
+    -----------------------------
+
+    • Return ONLY valid JSON.
+    • Do NOT include markdown.
+    • Do NOT explain anything.
+    • Do NOT wrap the response inside ```json```.
+    • Do NOT hallucinate.
+    • If information is unavailable, return null.
+
+    -----------------------------
+    OCR NOTES
+    -----------------------------
+
+    The OCR text may contain:
+
+    • merged words
+    • spelling mistakes
+    • broken tables
+    • duplicated headers
+    • duplicated footers
+    • page numbers
+    • missing spaces
+    • OCR artifacts
+
+    Infer the intended meaning using surrounding context.
+
+    -----------------------------
+    PATIENT INFORMATION
+    -----------------------------
+
+    Extract whenever available:
+
+    • Patient Name
+    • Date of Birth
+    • Age
+    • Gender
+    • Phone Number
+
+    Preserve the original values.
+
+    -----------------------------
+    REPORT INFORMATION
+    -----------------------------
+
+    Extract:
+
+    • Report Type
+    • Report Date
+    • Laboratory Name
+
+    -----------------------------
+    TEST RESULTS
+    -----------------------------
+
+    Extract EVERY laboratory test.
+
+    Never skip a row.
+
+    Never merge two different tests.
+
+    Preserve duplicate test names if they appear.
+
+    For every test extract:
+
+    • test_name
+    • value
+    • unit
+    • normal_range
+
+    -----------------------------
+    IMPORTANT
+    -----------------------------
+
+    • Keep numerical values exactly as written.
+    • Keep units exactly as written.
+    • Keep reference ranges exactly as written.
+    • Do not calculate High/Low/Normal.
+    • Do not infer missing values.
+    • Preserve the report order.
+
+    -----------------------------
+    DATES
+    -----------------------------
+
+    If the date format is clear,
+    convert it to
+
+    YYYY-MM-DD
+
+    Otherwise preserve the original value.
+
+    -----------------------------
+    OUTPUT JSON
+    -----------------------------
+
+    Return JSON matching EXACTLY this schema:
+
+    {output_schema}
+
+    -----------------------------
+    OCR TEXT
+    -----------------------------
+
+    {report_text}
+    """).strip()
