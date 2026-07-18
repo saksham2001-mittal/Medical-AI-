@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import Optional
 from datetime import date
 
 class PatientInfo(BaseModel):
@@ -18,10 +18,11 @@ class ReportInfo(BaseModel):
 
 class TestResult(BaseModel):
     test_name: str = ""
-    value: str = ""
+    result: str = ""
     unit: str = ""
     normal_range: str = ""
-    status: str = ""
+    status: str = "",
+    test_date: Optional[str] = None
 
 
 class MedicalReport(BaseModel):

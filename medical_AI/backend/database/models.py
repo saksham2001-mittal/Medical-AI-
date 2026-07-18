@@ -8,11 +8,11 @@ class Patient(Base):
     __tablename__ = "patients"
 
     patient_id = Column(Integer, primary_key=True, index=True)
-    patient_name = Column(String(100))
+    patient_name = Column(String(150), nullable=False)
     date_of_birth = Column(Date, nullable=True)
     age = Column(Integer, nullable=True)
     gender = Column(String(20))
-    phone_no = Column(String(20))
+    phone_no = Column(String(25))
     created_at = Column(TIMESTAMP, server_default=func.now())
 
     reports = relationship(
@@ -55,7 +55,6 @@ class Analysis(Base):
     __tablename__ = "analysis"
 
     id = Column(Integer, primary_key=True, index=True)
-
     report_id = Column(
         Integer,
         ForeignKey("reports.report_id"),
@@ -64,23 +63,14 @@ class Analysis(Base):
     )
 
     abnormal_findings = Column(JSON)
-
     possible_conditions = Column(JSON)
-
     recommendations = Column(JSON)
-
     lifestyle_advice = Column(JSON)
-
     follow_up_tests = Column(JSON)
-
     health_summary = Column(Text)
-
-    health_score = Column(Integer)
-
     risk_level = Column(String(20))
 
-    confidence = Column(Float)
-
+    
     report = relationship(
         "Report",
         back_populates="analysis"
@@ -90,13 +80,16 @@ class MedicalTestResult(Base):
     __tablename__ = "test_results"
 
     test_id = Column(Integer, primary_key=True, index=True)
-
     report_id = Column(Integer,ForeignKey("reports.report_id") )
 
-    test_name = Column(String(100))
-    value = Column(String(50))
+    test_name = Column(String(150))
+    result = Column(String(100))
     unit = Column(String(30))
     normal_range = Column(String(50))
-    status = Column(String(50))
-
-    report = relationship("Report", back_populates="test_results")
+    status = Column(String(20))
+    # Date when the test was performed
+    test_date = Column(Date, nullable=True)
+    
+    report = relationship(
+        "Report", 
+        back_populates="test_results")

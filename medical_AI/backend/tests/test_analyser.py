@@ -13,19 +13,21 @@ report = MedicalReport(
         gender="Male"
     ),
 
-    report_info=ReportInfo(
+    
+    report_info= ReportInfo(
         report_type="Blood Test",
-        report_date="09/03/2025",
+        report_date="2025-03-09",
         lab_name="Healthians"
     ),
 
     test_results=[
         TestResult(
             test_name="Triglycerides",
-            value="220",
+            result="220",
             unit="mg/dL",
             normal_range="<150",
-            status="High"
+            status="Completed",
+            test_date= "2024-10-30"
         ),
 
         TestResult(
@@ -38,8 +40,20 @@ report = MedicalReport(
     ]
 )
 
-result = analyze_medical_report(
-    report
-)
+# result = analyze_medical_report(report)
+from backend.services.report_classifier import get_report_category
 
+
+def run_analysis(report):
+    category = get_report_category(report)
+
+    if category != "lab":
+        return None
+
+    if not any(test.result.strip() for test in report.test_results):
+        return None
+
+    return analyze_medical_report(report)
+
+result= run_analysis(report)
 print(result.model_dump())

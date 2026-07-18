@@ -6,9 +6,11 @@ from backend.database.models import (
     Analysis,
 )
 from sqlalchemy import func
+
 from backend.schemas.medical_schema import MedicalReport
 from backend.schemas.analyse_schema import AnalysisResult
-from backend.validator.validation import (validate_patient_name, normalize_patient_name)
+from backend.validator.validation import validate_patient_name, normalize_patient_name
+from sqlalchemy.orm import Session, selectinload
 
 def save_medical_report(medical_report: MedicalReport,raw_text: str):
     """
@@ -129,7 +131,7 @@ def save_medical_report(medical_report: MedicalReport,raw_text: str):
                 MedicalTestResult(
                     report_id=report.report_id,
                     test_name=test.test_name,
-                    value=test.value,
+                    result=test.result,
                     unit=test.unit,
                     normal_range=test.normal_range,
                     status=test.status,
@@ -186,10 +188,8 @@ def save_analysis(report_id: int, analysis: AnalysisResult):
                 recommendations=analysis.recommendations,
                 lifestyle_advice=analysis.lifestyle_advice,
                 follow_up_tests=analysis.follow_up_tests,
-
                 health_summary=analysis.health_summary,
-                health_score=analysis.health_score,
-                risk_level=analysis.risk_level,
+                risk_level=analysis.risk_level
             )
 
             db.add(db_analysis)
@@ -207,3 +207,53 @@ def save_analysis(report_id: int, analysis: AnalysisResult):
 
             db.rollback()
             raise
+
+
+def get_patient(db: Session, patient_id: int,):
+    """
+    Fetch patient by ID.
+    """
+
+    return (
+        db.query(Patient)
+        .filter(Patient.patient_id == patient_id).first()
+    )
+
+def get_patient_reports(db: Session,patient_id: int):
+    """
+    Returns all reports of a patient.
+    """
+
+    return (
+        db.query(Report)
+        .filter(Report.patient_id == patient_id)
+        .order_by(Report.report_date.desc(), Report.created_at.desc(),).all()
+    )
+
+def get_report_tests(db: Session,report_id: int):
+    """
+    Returns all test results for one report.
+    """
+
+    return (
+        db.query(MedicalTestResult)
+        .filter(MedicalTestResult.report_id == report_id)
+        .order_by(MedicalTestResult.test_name).all()
+    )
+
+def get_complete_patient_data(db: Session,patient_id: int):
+    """
+    Fetch complete patient data with
+    reports, test results and analysis.
+    """
+
+    return (
+        db.query(Patient)
+        .options(
+
+            selectinload(Patient.reports).selectinload(Report.test_results),
+            selectinload(Patient.reports).selectinload(Report.analysis),
+
+        )
+        .filter(Patient.patient_id == patient_id).first()
+    )
