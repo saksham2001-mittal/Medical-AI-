@@ -190,7 +190,6 @@ def save_analysis(report_id: int, analysis: AnalysisResult):
                 health_summary=analysis.health_summary,
                 health_score=analysis.health_score,
                 risk_level=analysis.risk_level,
-                confidence=analysis.confidence,
             )
 
             db.add(db_analysis)
