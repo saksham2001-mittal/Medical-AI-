@@ -95,9 +95,9 @@
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 
-from backend.schemas.medical_schema import MedicalReport
-from backend.schemas.analyse_schema import AnalysisResult
-from backend.llm.llm_model import llm
+from backend.extraction.medical_schema import MedicalReport
+from backend.analysis.analysis_schema import AnalysisResult
+from backend.core.llm import llm
 
 parser = PydanticOutputParser(pydantic_object=AnalysisResult)
 
@@ -143,10 +143,10 @@ prompt = PromptTemplate(
 
     {medical_report}
     """,
-input_variables=["medical_report"],
-partial_variables={
-    "format_instructions": parser.get_format_instructions()
-    },
+    input_variables=["medical_report"],
+    partial_variables={
+        "format_instructions": parser.get_format_instructions()
+        },
 )
 
 chain = prompt | llm | parser
@@ -196,16 +196,6 @@ def format_report(report: MedicalReport) -> str:
 
     return "\n".join(lines)
 
-
-# def analyze_medical_report(medical_report: MedicalReport,) -> AnalysisResult:
-
-#     formatted_report = format_report(medical_report)
-
-#     return chain.invoke(
-#         {
-#             "medical_report": formatted_report
-#         }
-#     )
 
 def analyze_medical_report(medical_report: MedicalReport) -> AnalysisResult:
 

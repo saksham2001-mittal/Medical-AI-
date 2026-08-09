@@ -1,7 +1,7 @@
 import json
 
-from backend.prompts.patient_history_prompt import build_patient_history_prompt
-from backend.llm.llm_model import invoke
+from backend.history.patient_history_prompt import build_patient_history_prompt
+from backend.core.llm import invoke
 
 
 class HistoryExtractor:

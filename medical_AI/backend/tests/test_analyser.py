@@ -1,10 +1,13 @@
-from backend.agents.medical_analyser import (analyze_medical_report)
-from backend.schemas.medical_schema import (
+from backend.analysis.medical_analyzer import (analyze_medical_report)
+from backend.extraction.medical_schema import (
     MedicalReport,
     PatientInfo,
     ReportInfo,
     TestResult
 )
+
+from backend.preprocessing.report_classifier import get_report_category
+
 
 report = MedicalReport(
     patient_info=PatientInfo(
@@ -39,10 +42,6 @@ report = MedicalReport(
         )
     ]
 )
-
-# result = analyze_medical_report(report)
-from backend.services.report_classifier import get_report_category
-
 
 def run_analysis(report):
     category = get_report_category(report)

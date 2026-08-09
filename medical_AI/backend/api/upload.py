@@ -1,13 +1,19 @@
 from fastapi import APIRouter, UploadFile, File
 import os
 
-from backend.extraction.pdf_extractor import PDFExtractor
-from backend.extraction.medical_extraction import extract_medical_data
+from ..extraction.pdf_extractor import PDFExtractor
+from ..extraction.medical_extraction import extract_medical_data
 
-from backend.database.crud import save_medical_report, save_analysis
-from backend.agents.medical_analyser import analyze_medical_report
+from ..database.crud import save_medical_report, save_analysis
+from ..analysis.medical_analyzer import analyze_medical_report
 
 router = APIRouter()
+
+import sys
+
+print("=" * 60)
+print("FASTAPI PYTHON:", sys.executable)
+print("=" * 60)
 
 UPLOAD_DIR = "data"
 
@@ -22,11 +28,6 @@ async def upload_pdf(file: UploadFile = File(...)):
     # extracted_text = extract_text_from_pdf(file_path)
     extractor = PDFExtractor()
     text = extractor.extract(file_path)
-    # print("=" * 80)
-    # print("Final extracted text length:", len(text))
-    # print("=" * 80)
-
-    # print(text[:2000])
     
     structured_data = extract_medical_data(text)
 
@@ -36,11 +37,8 @@ async def upload_pdf(file: UploadFile = File(...)):
     )
 
     # If saved successfully, run AI analysis and persist it
-    # analysis_result = None
-    # analysis = analyze_medical_report(structured_data)
-
-    # analysis_result = save_analysis( report_id=save_result["report_id"],analysis=analysis)
-
+    analysis= None
+    analysis_result = None
     if save_result.get("status") == "success":
         analysis = analyze_medical_report(structured_data)
         analysis_result = save_analysis(

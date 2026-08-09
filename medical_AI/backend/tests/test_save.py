@@ -1,4 +1,4 @@
-from backend.schemas.medical_schema import (
+from backend.extraction.medical_schema import (
     MedicalReport,
     PatientInfo,
     ReportInfo,

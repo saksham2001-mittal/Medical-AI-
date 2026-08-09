@@ -1,4 +1,4 @@
-from backend.schemas.medical_schema import MedicalReport
+from backend.extraction.medical_schema import MedicalReport
 
 def get_report_category(report: MedicalReport) -> str:
     """

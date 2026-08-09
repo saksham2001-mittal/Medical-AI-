@@ -7,14 +7,14 @@ import logging
 
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
-from backend.llm.llm_model import invoke
+from backend.core.llm import invoke
 from pydantic import ValidationError
 from sqlalchemy import exc
-from backend.services.report_classifier import get_report_category
-from backend.validator.parsing import normalize_extracted_json
-from backend.schemas.medical_schema import MedicalReport
-from backend.prompts.medical_prompt import build_medical_prompt
-from backend.services.report_normaliser import normalize_raw_ocr_text
+from backend.preprocessing.report_classifier import get_report_category
+from backend.extraction.validator.parsing import normalize_extracted_json
+from backend.extraction.medical_schema import MedicalReport
+from backend.extraction.medical_prompt import build_medical_prompt
+from backend.preprocessing.report_normalizer import normalize_raw_ocr_text
 
 # load_dotenv()
 logger = logging.getLogger(__name__)

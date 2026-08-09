@@ -3,7 +3,10 @@ from typing import Any
 from sqlalchemy.orm import Session
 from backend.database import crud
 from datetime import datetime, time
-from backend.services.history_extractor import HistoryExtractor
+from backend.history.history_generator import HistoryExtractor
+from backend.progress.progress_tracker import ProgressTracker
+
+from backend.intelligence.clinical_insight import build_clinical_insights
 
 class PatientHistoryService:
     """
@@ -22,6 +25,8 @@ class PatientHistoryService:
     def __init__(self, db: Session):
         self.db = db
         self.history_extractor = HistoryExtractor()
+        self.progress_tracker = ProgressTracker()
+        # self.clinical_insights = build_clinical_insights()
 
     def build(self, patient_id: int):
 
@@ -42,46 +47,23 @@ class PatientHistoryService:
         ]
 
         patient_history = self.history_extractor.extract(reports)
+        report_objects = self._build_reports(patient_record)
+        statistics = self._build_statistics(patient_record)
+        progress = self.progress_tracker.analyze_progress(report_objects)
+        clinical_insights = build_clinical_insights(
+            reports=report_objects, progress=progress,
+        )
 
         return {
             "patient": self._build_patient_info(patient_record),
             "timeline": self._build_timeline(patient_record),
-            "reports": self._build_reports(patient_record),
+            "reports": report_objects,
             "history": patient_history,
-            "statistics": self._build_statistics(patient_record),
+            "statistics": statistics,
+            "progress": progress.model_dump(),
+            "clinical_insights": clinical_insights.model_dump()
         }
-    # ==========================================================
-    # Public API
-    # ==========================================================
-
-    # def build(self, patient_id: int) -> dict[str, Any]:
-    #     """
-    #     Build the complete patient history.
-
-    #     Parameters
-    #     ----------
-    #     patient_id : int
-
-    #     Returns
-    #     -------
-    #     dict:  Complete patient history object.
-    #     """
-
-    #     patient_record = crud.get_complete_patient_data(self.db, patient_id)
-
-    #     if patient_record is None:
-    #         raise ValueError(f"Patient with ID {patient_id} not found.")
-
-    #     history = {
-    #         "patient": self._build_patient_profile(patient_record),
-    #         "timeline": self._build_timeline(patient_record),
-    #         "reports": self._build_reports(patient_record),
-    #         "history": self._aggregate_history(patient_record),
-    #         "statistics": self._build_statistics(patient_record)
-    #     }
-
-    #     return history
-
+   
     # ==========================================================
     # Patient Profile
     # ==========================================================

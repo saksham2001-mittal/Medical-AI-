@@ -7,9 +7,9 @@ from backend.database.models import (
 )
 from sqlalchemy import func
 
-from backend.schemas.medical_schema import MedicalReport
-from backend.schemas.analyse_schema import AnalysisResult
-from backend.validator.validation import validate_patient_name, normalize_patient_name
+from backend.extraction.medical_schema import MedicalReport
+from backend.analysis.analysis_schema import AnalysisResult
+from backend.extraction.validator.validation import validate_patient_name, normalize_patient_name
 from sqlalchemy.orm import Session, selectinload
 
 def save_medical_report(medical_report: MedicalReport,raw_text: str):

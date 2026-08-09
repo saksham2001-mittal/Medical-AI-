@@ -5,6 +5,7 @@ load_dotenv()
 
 llm = ChatOllama(
     model="gemma4:31b-cloud",
+    # model= "qwen3.5:4b",
     temperature=0,
 )
 
