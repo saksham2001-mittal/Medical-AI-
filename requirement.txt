@@ -19,3 +19,5 @@ numpy
 
 python-multipart
 python-dateutil
+
+streamlit

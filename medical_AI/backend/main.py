@@ -1,10 +1,13 @@
+# ==================================================================
+# ==================== Medical AI Backend ==========================
+# ==================================================================
+
 from fastapi import FastAPI
 import uvicorn
 
 from backend.database.connections import Base, engine
 from backend.api.upload import router as upload_router
 
-# Import models so SQLAlchemy knows about them
 from backend.database import models
 
 Base.metadata.create_all(bind=engine)

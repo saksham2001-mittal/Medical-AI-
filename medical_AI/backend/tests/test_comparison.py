@@ -1,7 +1,7 @@
 from backend.database import SessionLocal
 from backend.database.models import Patient
 from backend.history.history_builder import PatientHistoryService
-from backend.qa.comparison_engine import ComparisonEngine
+from medical_AI.backend.agentic_qa.comparison_engine import ComparisonEngine
 
 
 def main():
