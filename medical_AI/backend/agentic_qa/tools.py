@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Dict, Any
 from backend.database.models import Patient
 from sqlalchemy import func
@@ -6,6 +7,9 @@ from langchain_core.tools import tool
 from backend.history.history_builder import PatientHistoryService
 from backend.agentic_qa.comparison_engine import ComparisonEngine
 
+from backend.agentic_qa.comparison_engine import ComparisonEngine
+from backend.agentic_qa.patient_data_retriever import PatientDataRetriever
+
 
 # ============================================================
 # SERVICES
@@ -13,6 +17,7 @@ from backend.agentic_qa.comparison_engine import ComparisonEngine
 
 _history_service = None
 _comparison_engine = ComparisonEngine()
+_patient_data_retriever = None
 _db= None
 
 def initialize_tools(db):
@@ -24,9 +29,11 @@ def initialize_tools(db):
 
     global _history_service
     global _db
+    global _patient_data_retriever
 
     _history_service = PatientHistoryService(db)
     _db = db
+    _patient_data_retriever = PatientDataRetriever(db)
 
 
 # ============================================================
@@ -50,13 +57,24 @@ def get_patient_history(patient_id: int) -> Dict[str, Any]:
 
     patient_history = _history_service.build(patient_id)
 
-    if not patient_history:
-        return {
-            "patient_id": patient_id,
-            "reports": []
-        }
+    # if not patient_history:
+    #     return {
+    #         "patient_id": patient_id,
+    #         "reports": []
+    #     }
 
-    return patient_history
+    # return patient_history
+    return (
+        patient_history
+        or {
+            "patient_id": patient_id,
+            "reports": [],
+        }
+    )
+
+# ============================================================
+# TOOL 2: GET PATIENT ID BY NAME
+# ============================================================
 
 @tool
 def get_patient_id_by_name(patient_name: str) -> int:
@@ -65,54 +83,99 @@ def get_patient_id_by_name(patient_name: str) -> int:
     the patient's name.
     """
 
-    if _db is None:
+    # if _db is None:
+    #     raise RuntimeError(
+    #         "Tools have not been initialized. "
+    #         "Call initialize_tools(db) first."
+    #     )
+
+    # if not patient_name:
+    #     raise ValueError("patient_name is required.")
+
+    # patient_name = patient_name.strip()
+
+    # patient = (
+    #     _db.query(Patient).filter(
+    #         func.lower(Patient.patient_name) == patient_name.lower()).first()
+    # )
+
+    # if patient is None:
+    #     raise ValueError(
+    #         f"No patient found with name: {patient_name}"
+    #     )
+
+    # return patient.patient_id
+    if _patient_data_retriever is None:
+        raise RuntimeError(
+            "Tools have not been initialized. Call initialize_tools(db) first."
+        )
+
+    return _patient_data_retriever.get_patient_id_by_name(
+        patient_name
+    )
+
+
+# ============================================================
+# Helper- LIGHTWEIGHT PATIENT DATA
+# ============================================================
+
+@tool
+def get_patient_reports(patient_id: int) -> Dict[str, Any]:
+
+    """
+    Retrieve structured patient/report/test data.
+
+    """
+
+    if _patient_data_retriever is None:
         raise RuntimeError(
             "Tools have not been initialized. "
             "Call initialize_tools(db) first."
         )
 
-    if not patient_name:
-        raise ValueError("patient_name is required.")
-
-    patient_name = patient_name.strip()
-
-    patient = (
-        _db.query(Patient).filter(
-            func.lower(Patient.patient_name) == patient_name.lower()).first()
-    )
-
-    if patient is None:
+    if not patient_id:
         raise ValueError(
-            f"No patient found with name: {patient_name}"
+            "patient_id is required."
         )
 
-    return patient.patient_id
+    return _patient_data_retriever.get_patient_reports(
+        patient_id
+    )
+
 
 # ============================================================
-# TOOL 2: COMPARE TEST RESULTS
+# TOOL 3: COMPARE TEST RESULTS
 # ============================================================
 
 @tool
 def compare_test_results(reports: list, test_name: str) -> Dict[str, Any]:
     """
-    Compare a specific laboratory test across
-    the patient's available reports.
+    Compare a specific laboratory test across the patient's available reports.
 
-    The actual numerical comparison is handled by
-    ComparisonEngine.
     """
 
     if not reports:
+        # return {
+        #     "test_name": test_name,
+        #     "measurements": [],
+        #     "changes": [],
+        #     "trend": "Insufficient Data",
+        # }
         return {
             "test_name": test_name,
             "measurements": [],
             "changes": [],
-            "trend": "Insufficient Data",
+            "overall_trend": "Insufficient Data",
+            "latest_change": "Insufficient Data",
+            "latest_value": None,
+            "previous_value": None,
+            "latest_status": "Unknown",
+            "reference_range": "",
         }
 
     if not test_name:
         raise ValueError("test_name is required.")
 
     return _comparison_engine.compare_test(
-        reports=reports,
-        test_name=test_name)
+        reports=reports, test_name=test_name
+    )

@@ -2,14 +2,16 @@ from langgraph.graph import StateGraph, START, END
 
 from backend.agentic_qa.state import PatientQAState
 from backend.agentic_qa.nodes import (
-    load_patient_history, analyze_question, generate_answer, compare_results
+    load_patient_data, analyze_question, generate_answer, compare_results
 )
-
+from typing import Literal
+from backend.core.llm import llm
+from backend.agentic_qa.state import PatientQAState
 # ============================================================
 # ==================== ROUTING LOGIC =========================
 # ============================================================
 
-def route_after_analysis(state: PatientQAState) -> str:
+def route_after_analysis(state: PatientQAState) -> Literal["compare_results","generate_answer",]:
     """
     Decide whether the question requires a test comparison.
 
@@ -20,29 +22,17 @@ def route_after_analysis(state: PatientQAState) -> str:
         -> generate_answer directly
     """
 
-    test_name = state.get("test_name")
-
-    if test_name:
-        print(
-            f"[route_after_analysis] "
-            f"Specific test identified: {test_name}"
-        )
-
+    if state.get("needs_comparison"):
         return "compare_results"
+    else:   
+        return "generate_answer"
 
-    print(
-        "[route_after_analysis] "
-        "No specific test identified. "
-        "Skipping comparison."
-    )
-
-    return "generate_answer"
 
 #============================================================
 #===================== BUILD GRAPH ==========================
 #============================================================
 
-def build_patient_qa_graph(llm):
+def build_patient_qa_graph():
     """
     Build and compile the Patient QA LangGraph.
 
@@ -66,7 +56,7 @@ def build_patient_qa_graph(llm):
     # Add nodes
     # --------------------------------------------------------
 
-    workflow.add_node("load_patient_history",load_patient_history)
+    workflow.add_node("load_patient_history",load_patient_data)
 
     workflow.add_node("analyze_question", lambda state: analyze_question(state, llm=llm))
 
@@ -105,4 +95,4 @@ def build_patient_qa_graph(llm):
 
     return workflow.compile()
 
-
+patient_qa_graph = build_patient_qa_graph()
